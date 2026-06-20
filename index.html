@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMI体型ビジュアライザー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">BMI  Body Shape</div>
+    <h1>その数字、<span class="thin">どんな体型か知っていますか。</span></h1>
+    <p class="lead">身長と体重を入れてスライダーを動かすと、BMIとそれに対応する体型イメージがリアルタイムで変わります。目標の数字を、具体的なイメージに変えてみてください。</p>
+  </header>
+
+  <div class="grid">
+    <!-- 入力 -->
+    <section class="card">
+      <div class="field">
+        <label for="height">身長</label>
+        <div class="input-row">
+          <input type="number" id="height" value="170" min="100" max="230" step="0.1" inputmode="decimal">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="weight">体重</label>
+        <div class="input-row">
+          <input type="number" id="weight" value="65" min="30" max="200" step="0.1" inputmode="decimal">
+          <span class="unit">kg</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="slider-head">
+          <label style="margin:0;">体重スライダー</label>
+          <span class="slider-val" id="sliderVal">65.0 kg</span>
+        </div>
+        <input type="range" id="weightSlider" min="30" max="200" value="65" step="0.1">
+        <div class="slider-scale"><span>30</span><span>115</span><span>200</span></div>
+      </div>
+    </section>
+
+    <!-- 体型ビジュアル -->
+    <section class="card visual">
+      <div class="figure-stage">
+        <span class="stage-tag" id="stageTag">BMI 18.5–21</span>
+        <img id="bodyImg" alt="体型イメージ">
+      </div>
+    </section>
+  </div>
+
+  <!-- 結果 -->
+  <section class="card" style="margin-top:20px;">
+    <div class="result-top">
+      <span class="bmi-number" id="bmiNumber">22.5</span>
+      <span class="bmi-label">BMI</span>
+    </div>
+    <span class="category-pill" id="categoryPill">普通体重</span>
+
+    <div class="scale">
+      <div class="scale-bar">
+        <div class="scale-seg" style="background:#63b3ed"></div>
+        <div class="scale-seg" style="background:#4fd1c5"></div>
+        <div class="scale-seg" style="background:#f6e05e"></div>
+        <div class="scale-seg" style="background:#f6ad55"></div>
+        <div class="scale-seg" style="background:#fc8181"></div>
+        <div class="scale-seg" style="background:#e53e3e"></div>
+      </div>
+      <div class="scale-marker"><div class="marker-dot" id="markerDot" style="left:50%;"></div></div>
+      <div class="scale-labels">
+        <span>低体重</span><span>普通</span><span>肥満1</span><span>肥満2</span><span>肥満3</span><span>肥満4</span>
+      </div>
+    </div>
+
+    <div class="target" id="targetMsg"></div>
+  </section>
+
+  <!-- 美容体重の説明 -->
+  <section class="card ref" style="margin-top:20px;">
+    <h3>目安になるBMI</h3>
+    <div class="ref-row" data-lo="0" data-hi="18.49">
+      <span class="ref-bmi">18.0</span>
+      <span class="ref-name">シンデレラ体重</span>
+      <span class="ref-desc">かなり細身に見える体型。医療上は低体重に入る数値なので、健康面には注意が必要です。</span>
+    </div>
+    <div class="ref-row" data-lo="18.5" data-hi="20.99">
+      <span class="ref-bmi">20.0</span>
+      <span class="ref-name">美容体重</span>
+      <span class="ref-desc">スリムで引き締まって見える体型。標準の範囲内で、見た目を重視する人が目標にしやすい数値です。</span>
+    </div>
+    <div class="ref-row" data-lo="21" data-hi="24.99">
+      <span class="ref-bmi">22.0</span>
+      <span class="ref-name">標準体重</span>
+      <span class="ref-desc">統計上もっとも病気になりにくいとされる数値。健康の基準として広く使われます。</span>
+    </div>
+  </section>
+
+  <p class="note">
+    画像を差し替えるには、<code>images</code> フォルダ内の
+    <code>bmi_18.png / bmi_22.png / bmi_25.png / bmi_30.png / bmi_35.png</code> を置き換えてください。
+    女性向けに切り替えたい場合は、<code>script.js</code> の <code>IMG_SET</code> でファイル名を変更します。
+  </p>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

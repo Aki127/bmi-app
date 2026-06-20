@@ -9,7 +9,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">BMI  Body Shape</div>
+    <div class="eyebrow">BMI × Body Shape</div>
     <h1>その数字、<span class="thin">どんな体型か知っていますか。</span></h1>
     <p class="lead">身長と体重を入れてスライダーを動かすと、BMIとそれに対応する体型イメージがリアルタイムで変わります。目標の数字を、具体的なイメージに変えてみてください。</p>
   </header>
@@ -43,9 +43,9 @@
 
     <!-- 体型ビジュアル -->
     <section class="card visual">
-      <div class="figure-stage">
+      <div class="figure-stage" id="figureStage">
         <span class="stage-tag" id="stageTag">BMI 18.5–21</span>
-        <img id="bodyImg" alt="体型イメージ">
+        <span class="drag-hint">ドラッグで回転</span>
       </div>
     </section>
   </div>
@@ -97,12 +97,12 @@
   </section>
 
   <p class="note">
-    画像を差し替えるには、<code>images</code> フォルダ内の
-    <code>bmi_18.png / bmi_22.png / bmi_25.png / bmi_30.png / bmi_35.png</code> を置き換えてください。
-    女性向けに切り替えたい場合は、<code>script.js</code> の <code>IMG_SET</code> でファイル名を変更します。
+    体型モデルは Three.js でリアルタイム生成しています。ステージをドラッグすると回転、
+    スライダーを動かすと体型が連続的に変化します。
+    女性向けの体型に切り替えたい場合は、<code>script.js</code> の人体パーツの比率を調整します。
   </p>
 </div>
 
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>

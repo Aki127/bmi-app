@@ -1,8 +1,9 @@
-// ====== BMI 3D Body Visualizer ======
-// Three.js でコード生成した人体を、BMIに応じて連続的に変形させる。
+// ====== BMI 3D Body Visualizer (本物の人体モデル + モーフ) ======
+// body.glb を読み込み、BMIに応じてモーフ(痩せ→太り)を連続的に動かす。
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ---- 医療的な肥満度分類（日本肥満学会基準） ----
 function classify(bmi){
@@ -24,85 +25,83 @@ const targetMsg = $('targetMsg'), stageTag = $('stageTag');
 const stage = $('figureStage');
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.set(0, 1.0, 6.2);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0.1, 5.2);
 
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.appendChild(renderer.domElement);
 
 // 照明
-scene.add(new THREE.HemisphereLight(0xffffff, 0x223040, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 1.4);
-key.position.set(3, 6, 5);
+scene.add(new THREE.HemisphereLight(0xcfe0f0, 0x202a33, 1.0));
+const key = new THREE.DirectionalLight(0xffffff, 1.8);
+key.position.set(3, 5, 5);
 scene.add(key);
-const rim = new THREE.DirectionalLight(0x4fd1c5, 0.6);
-rim.position.set(-4, 2, -3);
+const fill = new THREE.DirectionalLight(0xfff0e0, 0.6);
+fill.position.set(-3, 1, 4);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0x6fe0d4, 0.7);
+rim.position.set(-4, 3, -5);
 scene.add(rim);
 
 // 回転操作
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = false;
 controls.enableZoom = false;
-controls.minPolarAngle = Math.PI * 0.3;
+controls.minPolarAngle = Math.PI * 0.30;
 controls.maxPolarAngle = Math.PI * 0.62;
-controls.target.set(0, 0.2, 0);
+controls.target.set(0, -0.1, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = 1.2;
+controls.autoRotateSpeed = 1.0;
 controls.update();
 renderer.domElement.addEventListener('pointerdown', ()=>{ controls.autoRotate = false; });
 
-// ====== 人体パーツ ======
-const bodyMat = new THREE.MeshStandardMaterial({ color:0x4fd1c5, roughness:0.55, metalness:0.05 });
-const figure = new THREE.Group();
-scene.add(figure);
+// ====== モデル読み込み ======
+let morphMesh = null;      // モーフを持つメッシュ
+let morphIndex = 0;        // モーフのインデックス
+let modelReady = false;
 
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 24), bodyMat);
-head.position.y = 1.85;
+const loader = new GLTFLoader();
+loader.load('body.glb', (gltf)=>{
+  const root = gltf.scene;
 
-const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 1.0, 16, 32), bodyMat);
-torso.position.y = 0.95;
+  // モーフを持つメッシュを探す。持たないメッシュ(余分なfat)は隠す。
+  root.traverse(obj=>{
+    if(obj.isMesh){
+      if(obj.morphTargetInfluences && obj.morphTargetInfluences.length > 0){
+        morphMesh = obj;
+        morphIndex = 0;
+      } else {
+        obj.visible = false; // モーフなしメッシュ(重複)は非表示
+      }
+    }
+  });
 
-const hips = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 24), bodyMat);
-hips.position.y = 0.35;
-hips.scale.set(1, 0.7, 0.9);
+  // モデルの中心と大きさを測って、画面にちょうど収める
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 3.4 / maxDim;            // 高さを画面に合わせる
+  root.scale.setScalar(scale);
+  root.position.sub(center.multiplyScalar(scale));
+  root.position.y += 0.1;
 
-function makeLimb(r, len){
-  return new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 12, 20), bodyMat);
-}
-const armL = makeLimb(0.17, 1.1); armL.position.set(-0.78, 1.0, 0); armL.rotation.z = 0.12;
-const armR = makeLimb(0.17, 1.1); armR.position.set( 0.78, 1.0, 0); armR.rotation.z = -0.12;
-const legL = makeLimb(0.22, 1.25); legL.position.set(-0.27, -0.6, 0);
-const legR = makeLimb(0.22, 1.25); legR.position.set( 0.27, -0.6, 0);
+  scene.add(root);
+  modelReady = true;
+  render();
+}, undefined, (err)=>{
+  // 読み込み失敗時はステージにメッセージ
+  stage.insertAdjacentHTML('beforeend',
+    '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8a99a8;font-size:.85rem;text-align:center;padding:20px;">モデルを読み込めませんでした。<br>body.glb が同じフォルダにあるか確認してください。</div>');
+  console.error('GLB load error:', err);
+});
 
-figure.add(head, torso, hips, armL, armR, legL, legR);
-figure.position.y = -0.3;
-
-// ====== BMIによる変形 ======
-function bmiToFat(bmi){
-  const t = (bmi - 22) / 18;
-  return 1 + Math.max(-0.25, t) * 1.0;
-}
-
-function applyBody(bmi){
-  const fat = bmiToFat(bmi);
-  const wide = 1 + (fat - 1) * 1.15;
-  const headFat = 1 + (fat - 1) * 0.35;
-
-  torso.scale.set(wide, 1, wide * 0.95);
-  hips.scale.set(wide * 1.05, 0.7, wide * 0.95);
-  head.scale.set(headFat, 1, headFat);
-  armL.scale.set(1 + (fat-1)*0.7, 1, 1 + (fat-1)*0.7);
-  armR.scale.copy(armL.scale);
-  legL.scale.set(1 + (fat-1)*0.8, 1, 1 + (fat-1)*0.8);
-  legR.scale.copy(legL.scale);
-
-  const spread = (fat - 1) * 0.18;
-  armL.position.x = -0.78 - spread;
-  armR.position.x =  0.78 + spread;
-
-  const cat = classify(bmi);
-  bodyMat.color.set(cat.color);
+// BMI → モーフ量(0=痩せ, 1=太り)。痩せ版がBMI16、太り版がBMI35相当として補間。
+function bmiToMorph(bmi){
+  const t = (bmi - 16) / (35 - 16);
+  return Math.max(0, Math.min(1, t));
 }
 
 // ====== 計算とUI更新 ======
@@ -139,7 +138,10 @@ function render(){
   markerDot.style.left = bmiToPercent(bmi) + '%';
   stageTag.textContent = rangeLabel(bmi);
 
-  applyBody(bmi);
+  // モーフ量を更新
+  if(modelReady && morphMesh){
+    morphMesh.morphTargetInfluences[morphIndex] = bmiToMorph(bmi);
+  }
 
   document.querySelectorAll('.ref-row').forEach(row=>{
     const lo = parseFloat(row.dataset.lo), hi = parseFloat(row.dataset.hi);

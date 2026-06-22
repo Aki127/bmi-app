@@ -140,7 +140,18 @@ function render(){
 
   // モーフ量を更新
   if(modelReady && morphMesh){
-    morphMesh.morphTargetInfluences[morphIndex] = bmiToMorph(bmi);
+    const mv = bmiToMorph(bmi);
+    morphMesh.morphTargetInfluences[morphIndex] = mv;
+    // デバッグ表示
+    const dbg = document.getElementById('morphDebug');
+    if(dbg){
+      dbg.textContent = 'morph数:' + morphMesh.morphTargetInfluences.length
+        + ' / 値:' + mv.toFixed(2)
+        + ' / mesh:' + morphMesh.name;
+    }
+  } else {
+    const dbg = document.getElementById('morphDebug');
+    if(dbg) dbg.textContent = 'modelReady:' + modelReady + ' / morphMesh:' + (morphMesh? morphMesh.name : 'null');
   }
 
   document.querySelectorAll('.ref-row').forEach(row=>{
